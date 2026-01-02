@@ -91,8 +91,8 @@ app.use((req, res) => {
     res.status(404).json({ error: 'Route not found' });
 });
 
-// Server instance for graceful shutdown
-let server: any;
+// Server instance for shutdown handlers
+let server: any = null;
 
 // Graceful shutdown handler
 process.on('SIGTERM', () => {
@@ -102,8 +102,6 @@ process.on('SIGTERM', () => {
             console.log('HTTP server closed');
             process.exit(0);
         });
-    } else {
-        process.exit(0);
     }
 });
 
@@ -114,8 +112,6 @@ process.on('SIGINT', () => {
             console.log('HTTP server closed');
             process.exit(0);
         });
-    } else {
-        process.exit(0);
     }
 });
 
