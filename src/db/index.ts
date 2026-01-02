@@ -2,8 +2,13 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 import dotenv from 'dotenv';
+import dns from 'dns';
 
 dotenv.config();
+
+// Force IPv4 DNS resolution to avoid ENETUNREACH errors on platforms like Render
+// that may not support IPv6 connections to external databases
+dns.setDefaultResultOrder('ipv4first');
 
 const connectionString = process.env.DATABASE_URL!;
 
@@ -17,7 +22,8 @@ const dbOptions = {
     idle_timeout: 20, // Close idle connections after 20 seconds
     connect_timeout: 10, // Connection timeout in seconds
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Prefer IPv4 to avoid IPv6 connectivity issues on some hosting platforms
+    // Custom DNS lookup to force IPv4
+    fetch_types: false, // Disable automatic type fetching
     types: {
         // Add any custom type parsers here if needed
     },
