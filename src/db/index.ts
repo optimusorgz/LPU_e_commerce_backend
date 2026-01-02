@@ -16,12 +16,12 @@ console.log('🔧 Initializing database connection...');
 
 // Database connection options optimized for Render deployment
 const dbOptions: postgres.Options<{}> = {
-    max: 3,                      // Further reduced for reliability
-    idle_timeout: 20,            // Reduced idle timeout
-    connect_timeout: 30,         // Reduced to fail faster
-    ssl: 'require',              // Always require SSL (not conditional)
+    max: 3,                      // Limited pool size for Render's free tier
+    idle_timeout: 30,            // Increased to prevent premature disconnections
+    connect_timeout: 60,         // Increased for Render's network latency
+    ssl: 'require',              // Always require SSL
     fetch_types: false,          // Disable type fetching for performance
-    prepare: false,              // Disable prepared statements for Supabase compatibility
+    prepare: false,              // CRITICAL: Disable prepared statements for PgBouncer/Supabase
     connection: {
         application_name: 'campus-marketplace-backend',
     },
@@ -29,10 +29,16 @@ const dbOptions: postgres.Options<{}> = {
         undefined: null,         // Handle undefined values properly
     },
     onnotice: () => { },         // Suppress PostgreSQL notices
-    // Enhanced error logging for production
+    // Enhanced error logging
     onparameter: (key, value) => {
         if (process.env.NODE_ENV !== 'production') {
             console.log(`DB parameter: ${key} = ${value}`);
+        }
+    },
+    // Add connection error handler
+    onclose: () => {
+        if (process.env.NODE_ENV === 'production') {
+            console.log('⚠️  Database connection closed');
         }
     },
 };
