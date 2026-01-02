@@ -77,33 +77,47 @@ app.use((req, res) => {
 });
 
 // Start server with better logging
-app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`🔗 API: http://localhost:${PORT}/api`);
-    console.log(`🌐 CORS enabled for: ${allowedOrigins.join(', ')}`);
-    console.log(`🔒 Trust proxy: enabled`);
+async function startServer() {
+    try {
+        // Wait for database initialization
+        const { dbReady } = await import('./db');
+        await dbReady;
+        console.log('✅ Database initialized successfully');
 
-    // Validate critical environment variables
-    const requiredEnvVars = ['DATABASE_URL', 'FRONTEND_URL'];
-    const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+        app.listen(PORT, () => {
+            console.log(`🚀 Server running on port ${PORT}`);
+            console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`🔗 API: http://localhost:${PORT}/api`);
+            console.log(`🌐 CORS enabled for: ${allowedOrigins.join(', ')}`);
+            console.log(`🔒 Trust proxy: enabled`);
 
-    if (missingEnvVars.length > 0) {
-        console.error(`❌ Missing required environment variables: ${missingEnvVars.join(', ')}`);
-        console.error(`⚠️  Server may not function correctly!`);
-    } else {
-        console.log(`✅ All required environment variables are set`);
+            // Validate critical environment variables
+            const requiredEnvVars = ['DATABASE_URL', 'FRONTEND_URL'];
+            const missingEnvVars = requiredEnvVars.filter(varName => !process.env[varName]);
+
+            if (missingEnvVars.length > 0) {
+                console.error(`❌ Missing required environment variables: ${missingEnvVars.join(', ')}`);
+                console.error(`⚠️  Server may not function correctly!`);
+            } else {
+                console.log(`✅ All required environment variables are set`);
+            }
+
+            // Log database connection info (without password)
+            if (process.env.DATABASE_URL) {
+                try {
+                    const dbUrl = new URL(process.env.DATABASE_URL);
+                    console.log(`📊 Database: ${dbUrl.hostname}:${dbUrl.port}${dbUrl.pathname}`);
+                } catch (e) {
+                    console.error(`❌ Invalid DATABASE_URL format`);
+                }
+            }
+        });
+    } catch (error) {
+        console.error('❌ Failed to initialize database:', error);
+        process.exit(1);
     }
+}
 
-    // Log database connection info (without password)
-    if (process.env.DATABASE_URL) {
-        try {
-            const dbUrl = new URL(process.env.DATABASE_URL);
-            console.log(`📊 Database: ${dbUrl.hostname}:${dbUrl.port}${dbUrl.pathname}`);
-        } catch (e) {
-            console.error(`❌ Invalid DATABASE_URL format`);
-        }
-    }
-});
+startServer();
 
 export default app;
