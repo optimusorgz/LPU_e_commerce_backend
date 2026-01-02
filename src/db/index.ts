@@ -16,10 +16,10 @@ console.log('🔧 Initializing database connection...');
 
 // Database connection options optimized for Render deployment
 const dbOptions: postgres.Options<{}> = {
-    max: 5,                      // Reduced for Render free tier
-    idle_timeout: 30,            // Increased for serverless environments
-    connect_timeout: 60,         // Increased for cold starts on Render
-    ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
+    max: 3,                      // Further reduced for reliability
+    idle_timeout: 20,            // Reduced idle timeout
+    connect_timeout: 30,         // Reduced to fail faster
+    ssl: 'require',              // Always require SSL (not conditional)
     fetch_types: false,          // Disable type fetching for performance
     prepare: false,              // Disable prepared statements for Supabase compatibility
     connection: {
