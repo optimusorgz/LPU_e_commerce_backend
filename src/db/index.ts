@@ -18,7 +18,7 @@ console.log('🔧 Initializing database connection...');
 const dbOptions: postgres.Options<{}> = {
     max: 10,                    // Maximum connections in pool
     idle_timeout: 20,           // Close idle connections after 20s
-    connect_timeout: 10,        // Connection timeout
+    connect_timeout: 30,        // Connection timeout (increased for Render latency)
     ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
     fetch_types: false,         // Disable type fetching for performance
     prepare: false,             // Disable prepared statements for compatibility
