@@ -14,15 +14,21 @@ if (!connectionString) {
 
 console.log('🔧 Initializing database connection...');
 
-// Database connection options optimized for production hosting
+// Database connection options optimized for Render deployment
 const dbOptions: postgres.Options<{}> = {
-    max: 10,                    // Maximum connections in pool
-    idle_timeout: 20,           // Close idle connections after 20s
-    connect_timeout: 10,        // Connection timeout
+    max: 5,                      // Reduced for Render free tier
+    idle_timeout: 30,            // Increased for serverless environments
+    connect_timeout: 60,         // Increased for cold starts on Render
     ssl: process.env.NODE_ENV === 'production' ? 'require' : false,
-    fetch_types: false,         // Disable type fetching for performance
-    prepare: false,             // Disable prepared statements for compatibility
-    onnotice: () => { },        // Suppress PostgreSQL notices
+    fetch_types: false,          // Disable type fetching for performance
+    prepare: false,              // Disable prepared statements for Supabase compatibility
+    connection: {
+        application_name: 'campus-marketplace-backend',
+    },
+    transform: {
+        undefined: null,         // Handle undefined values properly
+    },
+    onnotice: () => { },         // Suppress PostgreSQL notices
     // Enhanced error logging for production
     onparameter: (key, value) => {
         if (process.env.NODE_ENV !== 'production') {

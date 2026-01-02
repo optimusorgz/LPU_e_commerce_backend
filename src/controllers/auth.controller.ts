@@ -58,7 +58,7 @@ export const getCurrentUser = async (req: any, res: Response): Promise<void> => 
     try {
         const userId = req.user.id;
         const email = req.user.email;
-        
+
         // Try to get name from Supabase user metadata
         const supabaseUserName = req.user.user_metadata?.name || req.user.name;
 
@@ -73,7 +73,7 @@ export const getCurrentUser = async (req: any, res: Response): Promise<void> => 
             // User exists in Supabase (middleware passed) but not in local DB
             // Use Supabase metadata name if available, otherwise use email prefix
             const defaultName = supabaseUserName || email.split('@')[0];
-            
+
             const [newUser] = await db.insert(users).values({
                 id: userId,
                 email: email,

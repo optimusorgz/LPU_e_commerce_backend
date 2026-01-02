@@ -25,13 +25,20 @@ const allowedOrigins = [
     'http://localhost:3001',
 ].filter(Boolean);
 
-// CORS configuration - Production ready
+// CORS configuration - Production ready with Vercel preview support
 app.use(cors({
     origin: (origin, callback) => {
         if (!origin) return callback(null, true);
+
+        // Check exact matches
         if (allowedOrigins.includes(origin)) {
             callback(null, true);
-        } else {
+        }
+        // Allow Vercel preview deployments (e.g., lpu-e-commerce-*.vercel.app)
+        else if (origin.match(/^https:\/\/lpu-e-commerce.*\.vercel\.app$/)) {
+            callback(null, true);
+        }
+        else {
             console.warn(`⚠️  CORS blocked origin: ${origin}`);
             callback(new Error('Not allowed by CORS'));
         }
