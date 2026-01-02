@@ -2,13 +2,8 @@ import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 import * as schema from './schema';
 import dotenv from 'dotenv';
-import dns from 'dns';
 
 dotenv.config();
-
-// Force IPv4 DNS resolution to avoid ENETUNREACH errors on platforms like Render
-// that may not support IPv6 connections to external databases
-dns.setDefaultResultOrder('ipv4first');
 
 const connectionString = process.env.DATABASE_URL!;
 
@@ -17,24 +12,26 @@ if (!connectionString) {
 }
 
 // Database connection options for production
-const dbOptions = {
+const dbOptions: postgres.Options<{}> = {
     max: 10, // Maximum number of connections
     idle_timeout: 20, // Close idle connections after 20 seconds
     connect_timeout: 10, // Connection timeout in seconds
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Custom DNS lookup to force IPv4
-    fetch_types: false, // Disable automatic type fetching
-    types: {
-        // Add any custom type parsers here if needed
-    },
-    prepare: false, // Disable prepared statements for better compatibility
+    // Connection configuration for better compatibility
+    fetch_types: false, // Disable automatic type fetching for faster connection
+    prepare: false, // Disable prepared statements for better compatibility with connection poolers
     onnotice: () => { }, // Suppress notices in production
+    // Force connection to prefer IPv4 by using resolved hostname if available
+    ...(process.env.NODE_ENV === 'production' && {
+        host_priority: 'ipv4' as const,
+    }),
 };
 
 // For migrations - single connection
 export const migrationClient = postgres(connectionString, {
     max: 1,
     ssl: dbOptions.ssl,
+    prepare: false,
 });
 
 // For queries - connection pool
