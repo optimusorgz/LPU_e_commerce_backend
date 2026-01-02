@@ -14,16 +14,20 @@ if (!connectionString) {
 
 console.log('🔧 Initializing database connection...');
 
-// Database connection options optimized for Render deployment
+// Database connection options optimized for Render deployment with geographic latency
 const dbOptions: postgres.Options<{}> = {
     max: 3,                      // Limited pool size for Render's free tier
-    idle_timeout: 30,            // Increased to prevent premature disconnections
-    connect_timeout: 60,         // Increased for Render's network latency
+    idle_timeout: 0,             // CRITICAL: Never close idle connections (0 = infinite)
+    connect_timeout: 120,        // 2 minutes for Render US → Supabase Asia latency
+    max_lifetime: 3600,          // Keep connections alive for 1 hour max
     ssl: 'require',              // Always require SSL
     fetch_types: false,          // Disable type fetching for performance
-    prepare: false,              // CRITICAL: Disable prepared statements for PgBouncer/Supabase
+    prepare: false,              // CRITICAL: Disable prepared statements for PgBouncer
+    keep_alive: 60,              // TCP keep-alive every 60 seconds
     connection: {
         application_name: 'campus-marketplace-backend',
+        // Add keep-alive settings for long-distance connections
+        options: '-c statement_timeout=30000',  // 30 second query timeout
     },
     transform: {
         undefined: null,         // Handle undefined values properly
@@ -35,12 +39,8 @@ const dbOptions: postgres.Options<{}> = {
             console.log(`DB parameter: ${key} = ${value}`);
         }
     },
-    // Add connection error handler
-    onclose: () => {
-        if (process.env.NODE_ENV === 'production') {
-            console.log('⚠️  Database connection closed');
-        }
-    },
+    // Connection retry on error
+    debug: process.env.NODE_ENV !== 'production',
 };
 
 // For migrations - single connection
